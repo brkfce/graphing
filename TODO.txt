@@ -1,0 +1,19 @@
+A to-do list for the graphing project
+
+
+
+****************
+Immidiate
+****************
+
+2. Convert file data points into a pixel array
+3. Create a method of writing text, pixel by pixel, for graphs
+
+
+
+****************
+Future
+****************
+
+1. Create a GUI, logo, etc
+
