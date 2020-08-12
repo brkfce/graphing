@@ -10,10 +10,15 @@
 static const int WIDTH = 960;
 static const int HEIGHT = 720;
 static const float INSET_FACTOR = 0.15;
+static const int WIDTH_INSET = WIDTH * INSET_FACTOR;
+static const int HEIGHT_INSET = HEIGHT * INSET_FACTOR;
+static const int TOP_LENGTH = WIDTH - 2 * WIDTH_INSET;
+static const int TOP_CORNER_INDEX = WIDTH * HEIGHT_INSET + WIDTH_INSET;
 static const uint8_t MAX = 0xFF;
 static const uint8_t MIN = 0x00;
 static const int LINE_THICKNESS = 1;
 static const int array_size = WIDTH * HEIGHT * 3;
+static const float data_border = 1.05;
 
 /*
  * main control function
@@ -40,12 +45,6 @@ void createPNG(dataPoint *head_ptr) {
  */
 // create graph border
 static void createBorder(uint8_t *PIXEL_ARRAY) {
-
- 	// helpful values
- 	int WIDTH_INSET = WIDTH * INSET_FACTOR;
-	int HEIGHT_INSET = HEIGHT * INSET_FACTOR;
-	int TOP_LENGTH = WIDTH - 2 * WIDTH_INSET;
-	int TOP_CORNER_INDEX = WIDTH * HEIGHT_INSET + WIDTH_INSET;
 
 	// top line
 	for (int i = TOP_CORNER_INDEX * 3; i < TOP_CORNER_INDEX * 3 + TOP_LENGTH * 3; i++) {
@@ -76,7 +75,34 @@ static void createBorder(uint8_t *PIXEL_ARRAY) {
  // FILL ME WITH SWEET SWEET CODE, AND THEN CALL THESE FUNCTIONS IN THE CONTROL/MAIN FUNCTION
  // calculate graph limits
 static graph_limit findLimits(dataPoint *head_ptr) {
-
+	dataPoint current_ptr = head_ptr;
+	// set initial max/min
+	graph_limit limits;
+	limits->x_min = current_ptr->x;
+	limits->x_max = current_ptr->x;
+	limits->y_min = current_ptr->y;
+	limits->y_max = current_ptr->y;
+	// go through datapoint list, updating max/min
+	while (current_ptr->nextPoint != NULL) {
+		current_ptr = current_ptr->nextPoint;
+		if (current_ptr->x < x_min) {
+			limits->x_min = current_ptr->x;
+		}
+		else if (current_ptr->x > x_max) {
+			limits->x_max = current_ptr->x;
+		}
+		if (current_ptr->y < y_min) {
+			limits->y_min = current_ptr->y;
+		}
+		else if (current_ptr->y > y_max) {
+			limits->y_max = current_ptr->y;
+		}
+	}
+	limits->x_min *= data_border;
+	limits->x_max *= data_border;
+	limits->y_min *= data_border;
+	limits->y_max *= data_border;
+	return limits;
 }
  // convert points to graph indicies
 static int pixelArrayIndex(dataPoint *current_ptr, graph_limit *limits) {

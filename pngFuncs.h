@@ -25,12 +25,16 @@ typedef struct graph_limits {
 	int y_min;
 	int y_max;
 } graph_limit;
+
 // draw graph border
 static void createBorder(uint8_t *); 
+
 // using datapoints, calculate the scale of the graph
 static graph_limit graphfindLimits(dataPoint *);
+
 // convert points to graph indicies
 static int pixelArrayIndex(dataPoint *, graph_limit *) ;
+
 // draw points to graph
 static void drawPoint(int);
 
