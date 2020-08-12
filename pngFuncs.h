@@ -7,6 +7,37 @@
 #include "main.h"
 
 
+
+/*
+ * main control function
+ 
+void createPNG(dataPoint *);
+*/
+
+
+
+/*
+ * convert data to pixel array
+ */
+typedef struct graph_limits {
+	int x_min;
+	int x_max;
+	int y_min;
+	int y_max;
+} graph_limit;
+// draw graph border
+static void createBorder(uint8_t *); 
+// using datapoints, calculate the scale of the graph
+static graph_limit graphfindLimits(dataPoint *);
+// convert points to graph indicies
+static int pixelArrayIndex(dataPoint *, graph_limit *) ;
+// draw points to graph
+static void drawPoint(int);
+
+
+/*
+ * create png from pixel array
+ */
 struct png {
 
 	// config
@@ -25,25 +56,21 @@ struct png {
 
 };
 
-
 enum pngStatus {
 	PNG_OK,
 	PNG_IO_ERROR,
 };
 
-
 /*
  * png writer with given width and height, and byte output stream
  */
-enum pngStatus pngInit(struct png this[static 1], uint32_t w, uint32_t h, FILE out[static 1]);
-
-
+static enum pngStatus pngInit(struct png this[static 1], uint32_t w, uint32_t h, FILE out[static 1]);
 /* 
  * writes pixels from given array to the output stream, in 3 byte chunks
  * pixels are presented from top to bottom, left to right, with subpixels in
  * RGB order
  */
-enum pngStatus pngWrite(struct png this[static 1], const uint8_t pixels[], size_t count);
+static enum pngStatus pngWrite(struct png this[static 1], const uint8_t pixels[], size_t count);
 
 // returns whether the data write was sucessful
 static bool write(struct png this[static 1], const uint8_t data[], size_t len);

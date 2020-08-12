@@ -1,10 +1,3 @@
-/*******************************************
-THINGS TO DO:
-  1. handle invalid data in file
-*******************************************/
-
-
-
 /* A simple graphing and statistics package, designed as a lightweight
    replacement for Origin in physics lab sessions at York
 

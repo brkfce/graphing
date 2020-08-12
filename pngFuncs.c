@@ -5,8 +5,87 @@
 #include "pngFuncs.h"
 
 /*
+ * graph constants
+ */
+static const int WIDTH = 960;
+static const int HEIGHT = 720;
+static const float INSET_FACTOR = 0.15;
+static const uint8_t MAX = 0xFF;
+static const uint8_t MIN = 0x00;
+static const int LINE_THICKNESS = 1;
+static const int array_size = WIDTH * HEIGHT * 3;
+
+/*
+ * main control function
+ 
+void createPNG(dataPoint *head_ptr) {
+	
+	// pixel array creation
+	
+	uint8_t PIXEL_ARRAY[array_size];
+
+	// fill array with white pixels
+	for (int i = 0; i < array_size; i++) {
+		PIXEL_ARRAY[i] = MAX;
+	}
+
+	// create borders of graph
+	createBorder(PIXEL_ARRAY);
+	
+} 
+*/
+
+/*
  * convert data to pixel array
  */
+// create graph border
+static void createBorder(uint8_t *PIXEL_ARRAY) {
+
+ 	// helpful values
+ 	int WIDTH_INSET = WIDTH * INSET_FACTOR;
+	int HEIGHT_INSET = HEIGHT * INSET_FACTOR;
+	int TOP_LENGTH = WIDTH - 2 * WIDTH_INSET;
+	int TOP_CORNER_INDEX = WIDTH * HEIGHT_INSET + WIDTH_INSET;
+
+	// top line
+	for (int i = TOP_CORNER_INDEX * 3; i < TOP_CORNER_INDEX * 3 + TOP_LENGTH * 3; i++) {
+		for (int thick = 0; thick < LINE_THICKNESS; thick++) {
+			PIXEL_ARRAY[i + thick * WIDTH * 3] = MIN;
+		}
+	}
+	// bottom line
+	for (int i = array_size - TOP_CORNER_INDEX * 3 - TOP_LENGTH * 3; i < array_size - TOP_CORNER_INDEX * 3; i++) {
+		for (int thick = 0; thick < LINE_THICKNESS; thick++) {
+			PIXEL_ARRAY[i + thick * WIDTH * 3] = MIN;
+		}
+	}
+	// left side line
+	for (int i = TOP_CORNER_INDEX * 3; i < (TOP_CORNER_INDEX + (HEIGHT - 2 * HEIGHT_INSET) * WIDTH) * 3; i = i + WIDTH * 3) {
+		for (int thick = 0; thick < LINE_THICKNESS * 3; thick++) {
+			PIXEL_ARRAY[i + thick] = MIN;
+		}
+	}
+	// right side line
+	for (int i = TOP_CORNER_INDEX * 3 + TOP_LENGTH * 3; i < (TOP_CORNER_INDEX + (HEIGHT - 2 * HEIGHT_INSET) * WIDTH + TOP_LENGTH) * 3; i = i + WIDTH * 3) {
+		for (int thick = 0; thick < LINE_THICKNESS * 3; thick++) {
+			PIXEL_ARRAY[i - thick] = MIN;
+		}
+	}
+ }
+
+ // FILL ME WITH SWEET SWEET CODE, AND THEN CALL THESE FUNCTIONS IN THE CONTROL/MAIN FUNCTION
+ // calculate graph limits
+static graph_limit findLimits(dataPoint *head_ptr) {
+
+}
+ // convert points to graph indicies
+static int pixelArrayIndex(dataPoint *current_ptr, graph_limit *limits) {
+
+}
+// draw points to graph
+static void drawPoint(int array_index) {
+
+}
 
 
 
@@ -15,7 +94,7 @@
  */
 static const uint16_t DEFLATE_MAX_BLOCK_SIZE = 65535;	// max size of block for DEFLATE compression
 
-enum pngStatus pngInit(struct png this[static 1], uint32_t w, uint32_t h, FILE out[static 1]) {
+static enum pngStatus pngInit(struct png this[static 1], uint32_t w, uint32_t h, FILE out[static 1]) {
 
 	// no checks required for size values, as PNG size will not be changable by the user
 	this->width = w;
@@ -73,7 +152,8 @@ enum pngStatus pngInit(struct png this[static 1], uint32_t w, uint32_t h, FILE o
 	return PNG_OK;
 }
 
-enum pngStatus pngWrite(struct png this[static 1], const uint8_t pixels[], size_t count) {
+
+static enum pngStatus pngWrite(struct png this[static 1], const uint8_t pixels[], size_t count) {
 
 	count *= 3;	// convert pixel count to byte count
 	while (count > 0) {
@@ -192,4 +272,58 @@ static void putBigUint32(uint32_t val, uint8_t array[static 4]) {
 	for (int i = 0; i < 4; i++) {
 		array[i] = (uint8_t)(val >> ((3-i) * 8));
 	}
+}
+
+/***************
+TESTING FUNCTION
+****************/
+int main(void) {
+	
+	// pixel array creation
+	const int array_size = WIDTH * HEIGHT * 3;
+	uint8_t PIXEL_ARRAY[array_size];
+
+	// fill array with white pixels
+	for (int i = 0; i < array_size; i++) {
+		PIXEL_ARRAY[i] = MAX;
+	}
+
+	// create borders of graph
+	createBorder(PIXEL_ARRAY);
+	
+
+	printf("ARRAY FILLED\n");
+	// open output file
+
+	FILE *fout = fopen("png-test.png", "wb");
+	if (fout == NULL) {
+		printf("Error: Failed to open file\n");
+		return 0;
+	}
+
+
+	// init output
+	struct png pngout;
+	enum pngStatus status = pngInit(&pngout, (uint32_t) WIDTH, (uint32_t) HEIGHT, fout);
+	if(status != PNG_OK) {
+		printf("Error: Bad status\n");
+	}
+
+
+	// write image data
+	status = pngWrite(&pngout, PIXEL_ARRAY, (size_t)(WIDTH * HEIGHT));
+	if (status != PNG_OK) {
+		printf("Error: Bad status\n");
+		return 0;
+	}
+
+
+	// close output file
+	if (fclose(fout) != 0) {
+		printf("Error: Failed to close file\n");
+		return 0;
+	}
+
+	printf("Success\n");
+	return 0;
 }
