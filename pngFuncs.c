@@ -3,6 +3,7 @@
  */
 #include "main.h"
 #include "pngFuncs.h"
+#include "dataMemFuncs.h"
 
 /*
  * graph constants
@@ -18,27 +19,72 @@ static const uint8_t MAX = 0xFF;
 static const uint8_t MIN = 0x00;
 static const int LINE_THICKNESS = 1;
 static const int array_size = WIDTH * HEIGHT * 3;
-static const float data_border = 1.05;
+static const float data_border = 0.05;
 
-/*
- * main control function
- 
+
+ // main control function
 void createPNG(dataPoint *head_ptr) {
 	
 	// pixel array creation
-	
+	const int array_size = WIDTH * HEIGHT * 3;
 	uint8_t PIXEL_ARRAY[array_size];
 
 	// fill array with white pixels
 	for (int i = 0; i < array_size; i++) {
 		PIXEL_ARRAY[i] = MAX;
 	}
+	printf("Pixel array created\n");
 
 	// create borders of graph
 	createBorder(PIXEL_ARRAY);
-	
+	printf("Borders added to graph\n");
+
+	// find limits of graph space
+	graph_limit *limits = NULL;
+	limits = (graph_limit *) errMalloc(sizeof(graph_limit));
+	findLimits(limits, head_ptr);
+	printf("Limits of graph calculated\n");
+
+	// fill array with pixels where points should be
+	graphPoints(head_ptr, limits, PIXEL_ARRAY);
+	printf("Array filled with points\n");
+
+
+	// open output file
+	FILE *fout = fopen("png-test.png", "wb");
+	if (fout == NULL) {
+		printf("Error: Failed to open file\n");
+		return 0;
+	}
+
+
+	// init output
+	struct png pngout;
+	enum pngStatus status = pngInit(&pngout, (uint32_t) WIDTH, (uint32_t) HEIGHT, fout);
+	if(status != PNG_OK) {
+		printf("Error: Bad status\n");
+	}
+
+
+	// write image data
+	status = pngWrite(&pngout, PIXEL_ARRAY, (size_t)(WIDTH * HEIGHT));
+	if (status != PNG_OK) {
+		printf("Error: Bad status\n");
+		return 0;
+	}
+
+
+	// close output file
+	if (fclose(fout) != 0) {
+		printf("Error: Failed to close file\n");
+		return 0;
+	}
+
+	printf("Success\n");
+
+	free(limits);
 } 
-*/
+
 
 /*
  * convert data to pixel array
@@ -72,45 +118,89 @@ static void createBorder(uint8_t *PIXEL_ARRAY) {
 	}
  }
 
- // FILL ME WITH SWEET SWEET CODE, AND THEN CALL THESE FUNCTIONS IN THE CONTROL/MAIN FUNCTION
  // calculate graph limits
-static graph_limit findLimits(dataPoint *head_ptr) {
-	dataPoint current_ptr = head_ptr;
+static void findLimits(graph_limit *limits, dataPoint *head_ptr) {
+	dataPoint* current_ptr = head_ptr;
+	printf("%d %d ", current_ptr->x, current_ptr->y);
 	// set initial max/min
-	graph_limit limits;
 	limits->x_min = current_ptr->x;
 	limits->x_max = current_ptr->x;
 	limits->y_min = current_ptr->y;
 	limits->y_max = current_ptr->y;
+	//printf("%d %d %d %d", limits->x_min, limits->x_max, limits->y_min, limits->y_max);
 	// go through datapoint list, updating max/min
-	while (current_ptr->nextPoint != NULL) {
-		current_ptr = current_ptr->nextPoint;
-		if (current_ptr->x < x_min) {
+	while (current_ptr != NULL) {
+		if (current_ptr->x < limits->x_min) {
 			limits->x_min = current_ptr->x;
 		}
-		else if (current_ptr->x > x_max) {
+		else if (current_ptr->x > limits->x_max) {
 			limits->x_max = current_ptr->x;
 		}
-		if (current_ptr->y < y_min) {
+		if (current_ptr->y < limits->y_min) {
 			limits->y_min = current_ptr->y;
 		}
-		else if (current_ptr->y > y_max) {
+		else if (current_ptr->y > limits->y_max) {
 			limits->y_max = current_ptr->y;
 		}
+		current_ptr = current_ptr->nextPoint;
 	}
-	limits->x_min *= data_border;
-	limits->x_max *= data_border;
-	limits->y_min *= data_border;
-	limits->y_max *= data_border;
+
+	limits->x_min *= (1 - data_border);
+	limits->x_max *= (1 + data_border);
+	limits->y_min *= (1 - data_border);
+	limits->y_max *= (1 + data_border);
+
 	return limits;
 }
+
+// go through points, drawing to graph
+static void graphPoints(dataPoint * head_ptr, graph_limit *limits, uint8_t *PIXEL_ARRAY) {
+	dataPoint* current_ptr = head_ptr;
+	while (current_ptr != NULL) {
+		int index = pixelArrayIndex(current_ptr, limits);
+		drawPoint(index, PIXEL_ARRAY);
+		current_ptr = current_ptr->nextPoint;
+	}
+}
+
  // convert points to graph indicies
 static int pixelArrayIndex(dataPoint *current_ptr, graph_limit *limits) {
+	// find how wide each pixel needs to be
+	float x_pixel_width = (limits->x_max - limits->x_min) / (WIDTH - 2 * WIDTH_INSET);
+	float y_pixel_width = (limits->y_max - limits->y_min) / (HEIGHT - 2 * HEIGHT_INSET);
 
+	// find the coordinates of the datapoint in pixel space, to the nearest pixel
+	int vertical_count = round((limits->y_max - current_ptr->y) / y_pixel_width);
+	int horizontal_count = round((limits->x_min + current_ptr->x) / x_pixel_width);
+
+
+	// calculate the corresponding index in the pixel array
+	int pixel_array_index = TOP_CORNER_INDEX + (vertical_count * WIDTH + horizontal_count) * 3;
+
+	return pixel_array_index; 
 }
-// draw points to graph
-static void drawPoint(int array_index) {
 
+// fills in the pixel array with a black pixel at the specified index
+static void drawPixel(int array_index, uint8_t *PIXEL_ARRAY) {
+	PIXEL_ARRAY[array_index] = MIN;
+	PIXEL_ARRAY[array_index + 1] = MIN;
+	PIXEL_ARRAY[array_index + 2] = MIN;
+}
+
+// draw points to graph
+static void drawPoint(int array_index, uint8_t *PIXEL_ARRAY) {
+	// will draw a cross-shape where the point is in pixel space
+	
+	// central
+	drawPixel(array_index, PIXEL_ARRAY);
+	// top left
+	drawPixel(array_index - WIDTH * 3 - 3, PIXEL_ARRAY);
+	// top right
+	drawPixel(array_index - WIDTH * 3 + 3, PIXEL_ARRAY);
+	// bottom left
+	drawPixel(array_index + WIDTH * 3 - 3, PIXEL_ARRAY);
+	// bottom right
+	drawPixel(array_index + WIDTH * 3 + 3, PIXEL_ARRAY);
 }
 
 
@@ -298,58 +388,4 @@ static void putBigUint32(uint32_t val, uint8_t array[static 4]) {
 	for (int i = 0; i < 4; i++) {
 		array[i] = (uint8_t)(val >> ((3-i) * 8));
 	}
-}
-
-/***************
-TESTING FUNCTION
-****************/
-int main(void) {
-	
-	// pixel array creation
-	const int array_size = WIDTH * HEIGHT * 3;
-	uint8_t PIXEL_ARRAY[array_size];
-
-	// fill array with white pixels
-	for (int i = 0; i < array_size; i++) {
-		PIXEL_ARRAY[i] = MAX;
-	}
-
-	// create borders of graph
-	createBorder(PIXEL_ARRAY);
-	
-
-	printf("ARRAY FILLED\n");
-	// open output file
-
-	FILE *fout = fopen("png-test.png", "wb");
-	if (fout == NULL) {
-		printf("Error: Failed to open file\n");
-		return 0;
-	}
-
-
-	// init output
-	struct png pngout;
-	enum pngStatus status = pngInit(&pngout, (uint32_t) WIDTH, (uint32_t) HEIGHT, fout);
-	if(status != PNG_OK) {
-		printf("Error: Bad status\n");
-	}
-
-
-	// write image data
-	status = pngWrite(&pngout, PIXEL_ARRAY, (size_t)(WIDTH * HEIGHT));
-	if (status != PNG_OK) {
-		printf("Error: Bad status\n");
-		return 0;
-	}
-
-
-	// close output file
-	if (fclose(fout) != 0) {
-		printf("Error: Failed to close file\n");
-		return 0;
-	}
-
-	printf("Success\n");
-	return 0;
 }

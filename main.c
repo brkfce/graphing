@@ -18,12 +18,7 @@
 int main (int argc, char *argv[]) {
 
 
-  /* SDL STUFF, DELETE ME
-  // create SDL window and surface
-  SDL_Window *window = NULL;
-  SDL_Surface *screen_surface = NULL;
-  SDLStartUp(window, screen_surface);
-  */
+  
 
   // file handling
   char file_name[30];
@@ -51,31 +46,12 @@ int main (int argc, char *argv[]) {
   line *line_ptr = (line *) errMalloc(sizeof(line));
   linearBestFit(head_ptr, line_ptr);
 
-  printf("Slope: %f\nIntercept: %f\nCorrelation Coefficient: %f", line_ptr->slope, line_ptr->intercept, line_ptr->corr_coeff);
+  printf("Slope: %f\nIntercept: %f\nCorrelation Coefficient: %f\n", line_ptr->slope, line_ptr->intercept, line_ptr->corr_coeff);
 
-
-  /* SDL STUFF, DELETE ME
-  // loop to quit SDL
-  bool quit = false;
-  SDL_Event event;
-  while (!quit) {
-    // get events from event queue
-    while (SDL_PollEvent(&event) != 0) {
-      // user quits
-      if (event.type == SDL_QUIT) {
-        quit = true;
-      }
-      SDL_UpdateWindowSurface(window);
-    }
-  }
-
-  SDL_FreeSurface(screen_surface);
-  screen_surface = NULL;
-  SDL_DestroyWindow(window);
-  window = NULL;
-  SDL_Quit();
+  createPNG(head_ptr);
+  
   freeDataMemory(head_ptr);
-  */
+  
 
   return 0;
 }

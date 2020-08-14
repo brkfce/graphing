@@ -8,11 +8,11 @@
 
 
 
-/*
- * main control function
+
+ // main control function
  
 void createPNG(dataPoint *);
-*/
+
 
 
 
@@ -20,23 +20,29 @@ void createPNG(dataPoint *);
  * convert data to pixel array
  */
 typedef struct graph_limits {
-	int x_min;
-	int x_max;
-	int y_min;
-	int y_max;
+	double x_min;
+	double x_max;
+	double y_min;
+	double y_max;
 } graph_limit;
 
 // draw graph border
 static void createBorder(uint8_t *); 
 
 // using datapoints, calculate the scale of the graph
-static graph_limit graphfindLimits(dataPoint *);
+static void findLimits(graph_limit *, dataPoint *);
+
+// go through points, drawing to graph
+static void graphPoints(dataPoint *, graph_limit *, uint8_t *);
 
 // convert points to graph indicies
-static int pixelArrayIndex(dataPoint *, graph_limit *) ;
+static int pixelArrayIndex(dataPoint *, graph_limit *);
+
+// fill in a black pixel at the specified array index in PIXEL_ARRAY
+static void drawPixel(int, uint8_t *);
 
 // draw points to graph
-static void drawPoint(int);
+static void drawPoint(int, uint8_t *);
 
 
 /*
