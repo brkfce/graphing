@@ -19,7 +19,7 @@ static const uint8_t MAX = 0xFF;
 static const uint8_t MIN = 0x00;
 static const int LINE_THICKNESS = 1;
 static const int array_size = WIDTH * HEIGHT * 3;
-static const float data_border = 0.05;
+static const float border_extension = 0.15;
 
 
  // main control function
@@ -42,7 +42,7 @@ void createPNG(dataPoint *head_ptr) {
 	// find limits of graph space
 	graph_limit *limits = NULL;
 	limits = (graph_limit *) errMalloc(sizeof(graph_limit));
-	findLimits(limits, head_ptr);
+	findLimits(head_ptr, limits);
 	printf("Limits of graph calculated\n");
 
 	// fill array with pixels where points should be
@@ -119,9 +119,8 @@ static void createBorder(uint8_t *PIXEL_ARRAY) {
  }
 
  // calculate graph limits
-static void findLimits(graph_limit *limits, dataPoint *head_ptr) {
-	dataPoint* current_ptr = head_ptr;
-	printf("%d %d ", current_ptr->x, current_ptr->y);
+static void findLimits(dataPoint *head_ptr, graph_limit *limits) {
+	dataPoint *current_ptr = head_ptr;
 	// set initial max/min
 	limits->x_min = current_ptr->x;
 	limits->x_max = current_ptr->x;
@@ -145,16 +144,19 @@ static void findLimits(graph_limit *limits, dataPoint *head_ptr) {
 		current_ptr = current_ptr->nextPoint;
 	}
 
-	limits->x_min *= (1 - data_border);
-	limits->x_max *= (1 + data_border);
-	limits->y_min *= (1 - data_border);
-	limits->y_max *= (1 + data_border);
+	// add a border to the data inside the graph, from the graph edge
+	float x_border_extension = (limits->x_max - limits->x_min) * border_extension;
+	float y_border_extension = (limits->y_max - limits->y_min) * border_extension;
+	limits->x_min -= x_border_extension;
+	limits->x_max += x_border_extension;
+	limits->y_min -= y_border_extension;
+	limits->y_max += y_border_extension;
 
 	return limits;
 }
 
 // go through points, drawing to graph
-static void graphPoints(dataPoint * head_ptr, graph_limit *limits, uint8_t *PIXEL_ARRAY) {
+static void graphPoints(dataPoint *head_ptr, graph_limit *limits, uint8_t *PIXEL_ARRAY) {
 	dataPoint* current_ptr = head_ptr;
 	while (current_ptr != NULL) {
 		int index = pixelArrayIndex(current_ptr, limits);
@@ -171,11 +173,11 @@ static int pixelArrayIndex(dataPoint *current_ptr, graph_limit *limits) {
 
 	// find the coordinates of the datapoint in pixel space, to the nearest pixel
 	int vertical_count = round((limits->y_max - current_ptr->y) / y_pixel_width);
-	int horizontal_count = round((limits->x_min + current_ptr->x) / x_pixel_width);
+	int horizontal_count = round((current_ptr->x - limits->x_min) / x_pixel_width);
 
 
 	// calculate the corresponding index in the pixel array
-	int pixel_array_index = TOP_CORNER_INDEX + (vertical_count * WIDTH + horizontal_count) * 3;
+	int pixel_array_index = (TOP_CORNER_INDEX + vertical_count * WIDTH + horizontal_count) * 3;
 
 	return pixel_array_index; 
 }

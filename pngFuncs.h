@@ -20,17 +20,17 @@ void createPNG(dataPoint *);
  * convert data to pixel array
  */
 typedef struct graph_limits {
-	double x_min;
-	double x_max;
-	double y_min;
-	double y_max;
+	float x_min;
+	float x_max;
+	float y_min;
+	float y_max;
 } graph_limit;
 
 // draw graph border
 static void createBorder(uint8_t *); 
 
 // using datapoints, calculate the scale of the graph
-static void findLimits(graph_limit *, dataPoint *);
+static void findLimits(dataPoint *, graph_limit *);
 
 // go through points, drawing to graph
 static void graphPoints(dataPoint *, graph_limit *, uint8_t *);
