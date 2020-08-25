@@ -21,7 +21,9 @@ typedef struct lines {
 // include units and exponents in later versions
 typedef struct dataPoints {
   float x;
+  float x_err;
   float y;
+  float y_err;
   struct dataPoints *nextPoint;
 } dataPoint;
 

@@ -35,9 +35,11 @@ void assignData(dataPoint *head_ptr, FILE *file_ptr) {
   int array_counter = 0;
   double x_val, y_val;
   while (current_ptr != NULL) {
-    readLine(file_ptr, &x_val, &y_val);
+    readLine(file_ptr, &x_val, &x_err_val, &y_val, &y_val_err);
     current_ptr->x = x_val;
+    current_ptr->x_err = x_err_val;
     current_ptr->y = y_val;
+    current_ptr->y_err = y_err_val;
     current_ptr = current_ptr->nextPoint;
     array_counter++;
   }

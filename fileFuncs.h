@@ -5,6 +5,7 @@
 
 // file functions
 int pointCount(FILE *);
-void readLine(FILE *, double *, double *);
+void readLine(FILE *, float *, float *, float *, float *);
+float readValue(FILE *, int);
 
 #endif
