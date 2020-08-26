@@ -33,9 +33,9 @@ dataPoint *allocateDataMemory(int number_of_points){
 void assignData(dataPoint *head_ptr, FILE *file_ptr) {
   dataPoint *current_ptr = head_ptr;
   int array_counter = 0;
-  double x_val, y_val;
+  float x_val, x_err_val, y_val, y_err_val;
   while (current_ptr != NULL) {
-    readLine(file_ptr, &x_val, &x_err_val, &y_val, &y_val_err);
+    readLine(file_ptr, &x_val, &x_err_val, &y_val, &y_err_val);
     current_ptr->x = x_val;
     current_ptr->x_err = x_err_val;
     current_ptr->y = y_val;
