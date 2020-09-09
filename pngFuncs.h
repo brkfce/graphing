@@ -24,6 +24,8 @@ typedef struct graph_limits {
 	float x_max;
 	float y_min;
 	float y_max;
+	float x_pixel_width;
+	float y_pixel_width;
 } graph_limit;
 
 // draw graph border
@@ -32,7 +34,7 @@ static void createBorder(uint8_t *);
 // using datapoints, calculate the scale of the graph
 static void findLimits(dataPoint *, graph_limit *);
 
-// go through points, drawing to graph
+// go through points, drawing to graph including limits
 static void graphPoints(dataPoint *, graph_limit *, uint8_t *);
 
 // convert points to graph indicies
@@ -44,6 +46,14 @@ static void drawPixel(int, uint8_t *);
 // draw points to graph
 static void drawPoint(int, uint8_t *);
 
+// find the length of an error bar
+static int errorLength(float, float);
+
+// draw x error bar
+static void drawXError(int, int, uint8_t *);
+
+// draw y error bar
+static void drawYError(int, int, uint8_t *);
 
 /*
  * create png from pixel array

@@ -3,12 +3,16 @@ A to-do list for the graphing project
 
 
 ****************
-Immidiate
+Immediate
 ****************
 
-2. Convert file data points into a pixel array
 3. Create a method of writing text, pixel by pixel, for graphs
 4. Either fully use the PNG status ENUM, or test to remove potential bugs so the status is redundant and can be removed
+5. Read labels in from file
+6. Add graph ticks, with labels
+7. Graph line of best fit 
+8. Support more complex lines of best fit, with either automatic detection or user selection
+
 
 
 

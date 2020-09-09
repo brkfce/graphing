@@ -6,20 +6,30 @@
 #include "dataMemFuncs.h"
 
 /*
- * graph constants
+ * graph constants (global for simplicity, may be changable by config file or user entry in future)
  */
+// width and height of total PNG in pixels
 static const int WIDTH = 960;
 static const int HEIGHT = 720;
+// how far inside of the PNG the graph area is
 static const float INSET_FACTOR = 0.15;
 static const int WIDTH_INSET = WIDTH * INSET_FACTOR;
 static const int HEIGHT_INSET = HEIGHT * INSET_FACTOR;
+// the length of the graphable area
 static const int TOP_LENGTH = WIDTH - 2 * WIDTH_INSET;
+// the index of the top left corner of the graphable area
 static const int TOP_CORNER_INDEX = WIDTH * HEIGHT_INSET + WIDTH_INSET;
+// max and min hex values for the RGB of each pixel
 static const uint8_t MAX = 0xFF;
 static const uint8_t MIN = 0x00;
+// the thickness of the border of the graphable area
 static const int LINE_THICKNESS = 1;
+// the size of the pixel array
 static const int array_size = WIDTH * HEIGHT * 3;
+// how far inside the graphable area the points should be
 static const float border_extension = 0.15;
+// how long each side of the error bar ends are
+static const int bar_end_length = 2;
 
 
  // main control function
@@ -45,9 +55,10 @@ void createPNG(dataPoint *head_ptr) {
 	findLimits(head_ptr, limits);
 	printf("Limits of graph calculated\n");
 
-	// fill array with pixels where points should be
+	// fill array with pixels where points should be, including error bars
 	graphPoints(head_ptr, limits, PIXEL_ARRAY);
 	printf("Array filled with points\n");
+
 
 
 	// open output file
@@ -122,24 +133,24 @@ static void createBorder(uint8_t *PIXEL_ARRAY) {
 static void findLimits(dataPoint *head_ptr, graph_limit *limits) {
 	dataPoint *current_ptr = head_ptr;
 	// set initial max/min
-	limits->x_min = current_ptr->x;
-	limits->x_max = current_ptr->x;
-	limits->y_min = current_ptr->y;
-	limits->y_max = current_ptr->y;
-	//printf("%d %d %d %d", limits->x_min, limits->x_max, limits->y_min, limits->y_max);
+	limits->x_min = current_ptr->x - current_ptr->x_err;
+	limits->x_max = current_ptr->x + current_ptr->x_err;
+	limits->y_min = current_ptr->y - current_ptr->y_err;
+	limits->y_max = current_ptr->y + current_ptr->y_err;
+
 	// go through datapoint list, updating max/min
 	while (current_ptr != NULL) {
-		if (current_ptr->x < limits->x_min) {
-			limits->x_min = current_ptr->x;
+		if (current_ptr->x - current_ptr->x_err < limits->x_min) {
+			limits->x_min = current_ptr->x - current_ptr->x_err;
 		}
-		else if (current_ptr->x > limits->x_max) {
-			limits->x_max = current_ptr->x;
+		else if (current_ptr->x + current_ptr->x_err > limits->x_max) {
+			limits->x_max = current_ptr->x + current_ptr->x_err;
 		}
-		if (current_ptr->y < limits->y_min) {
-			limits->y_min = current_ptr->y;
+		if (current_ptr->y - current_ptr->y_err < limits->y_min) {
+			limits->y_min = current_ptr->y - current_ptr->y_err;
 		}
-		else if (current_ptr->y > limits->y_max) {
-			limits->y_max = current_ptr->y;
+		else if (current_ptr->y + current_ptr->y_err > limits->y_max) {
+			limits->y_max = current_ptr->y + current_ptr->y_err;
 		}
 		current_ptr = current_ptr->nextPoint;
 	}
@@ -161,6 +172,10 @@ static void graphPoints(dataPoint *head_ptr, graph_limit *limits, uint8_t *PIXEL
 	while (current_ptr != NULL) {
 		int index = pixelArrayIndex(current_ptr, limits);
 		drawPoint(index, PIXEL_ARRAY);
+		int x_err_length = errorLength(current_ptr->x_err, limits->x_pixel_width);
+		int y_err_length = errorLength(current_ptr->y_err, limits->y_pixel_width);
+		drawXError(index, x_err_length, PIXEL_ARRAY);
+		drawYError(index, y_err_length, PIXEL_ARRAY);
 		current_ptr = current_ptr->nextPoint;
 	}
 }
@@ -170,11 +185,12 @@ static int pixelArrayIndex(dataPoint *current_ptr, graph_limit *limits) {
 	// find how wide each pixel needs to be
 	float x_pixel_width = (limits->x_max - limits->x_min) / (WIDTH - 2 * WIDTH_INSET);
 	float y_pixel_width = (limits->y_max - limits->y_min) / (HEIGHT - 2 * HEIGHT_INSET);
+	limits->x_pixel_width = x_pixel_width;
+	limits->y_pixel_width = y_pixel_width;
 
 	// find the coordinates of the datapoint in pixel space, to the nearest pixel
 	int vertical_count = round((limits->y_max - current_ptr->y) / y_pixel_width);
 	int horizontal_count = round((current_ptr->x - limits->x_min) / x_pixel_width);
-
 
 	// calculate the corresponding index in the pixel array
 	int pixel_array_index = (TOP_CORNER_INDEX + vertical_count * WIDTH + horizontal_count) * 3;
@@ -204,6 +220,42 @@ static void drawPoint(int array_index, uint8_t *PIXEL_ARRAY) {
 	// bottom right
 	drawPixel(array_index + WIDTH * 3 + 3, PIXEL_ARRAY);
 }
+
+// find pixel length of error bars
+static int errorLength(float error, float pixel_width) {
+	return round(error / pixel_width); 
+}
+
+// draw x error bar
+static void drawXError(int index, int bar_length, uint8_t *PIXEL_ARRAY) {
+	for (int i = 0; i < bar_length; i++) {
+		drawPixel((index + (1 + i) * 3), PIXEL_ARRAY);
+		drawPixel((index - (1 + i) * 3), PIXEL_ARRAY);
+	}
+	for (int i = 0; i < bar_end_length; i++) {
+		drawPixel((index + (bar_length * 3) + (WIDTH * (1 + i) * 3)), PIXEL_ARRAY);
+		drawPixel((index + (bar_length * 3) - (WIDTH * (1 + i) * 3)), PIXEL_ARRAY);
+		drawPixel((index - (bar_length * 3) + (WIDTH * (1 + i) * 3)), PIXEL_ARRAY);
+		drawPixel((index - (bar_length * 3) - (WIDTH * (1 + i) * 3)), PIXEL_ARRAY);
+	}
+
+}
+
+// draw y error bar
+static void drawYError(int index, int bar_length, uint8_t *PIXEL_ARRAY) {
+	for (int i = 0; i < bar_length; i++) {
+		drawPixel((index + (WIDTH * (1 + i) * 3)), PIXEL_ARRAY);
+		drawPixel((index - (WIDTH * (1 + i) * 3)), PIXEL_ARRAY);
+	}
+	for (int i = 0; i < bar_end_length; i++) {
+		drawPixel((index + (WIDTH * bar_length * 3) + (1 + i) * 3), PIXEL_ARRAY);
+		drawPixel((index + (WIDTH * bar_length * 3) - (1 + i) * 3), PIXEL_ARRAY);
+		drawPixel((index - (WIDTH * bar_length * 3) + (1 + i) * 3), PIXEL_ARRAY);
+		drawPixel((index - (WIDTH * bar_length * 3) - (1 + i) * 3), PIXEL_ARRAY);
+	}
+}
+
+
 
 
 
