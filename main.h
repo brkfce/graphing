@@ -17,8 +17,7 @@ typedef struct lines {
   double corr_coeff;
 } line;
 
-// at present, only coordinates are supported
-// include units and exponents in later versions
+// coordinates, units, and exponents are now supported
 typedef struct dataPoints {
   float x;
   float x_err;
@@ -26,5 +25,15 @@ typedef struct dataPoints {
   float y_err;
   struct dataPoints *nextPoint;
 } dataPoint;
+
+// the title and unit for each axes is stored here
+typedef struct dataLabel {
+	char x_label[100];
+	char x_unit[100];
+	char y_label[100];
+	char y_unit[100];
+} dataLabel;
+
+void printUsageInfo(void);
 
 #endif

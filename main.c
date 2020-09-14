@@ -17,15 +17,13 @@
 
 int main (int argc, char *argv[]) {
 
-
+  printUsageInfo();
   
 
   // file handling
-  char file_name[30];
+  char file_name[100];
   FILE *file_ptr;
 
-  printf("Welcome.\n");
-  printf("Note: The data file must be in the same folder as this program, and formatted X,Y\n");
   printf("Enter the filename containing the data: ");
   gets(file_name);
 
@@ -35,23 +33,30 @@ int main (int argc, char *argv[]) {
     exit(-1);
   }
 
-  // determine the number of points
+
   int number_of_points = pointCount(file_ptr);
 
-
+  dataLabel *labels_ptr = allocateLabelMemory();
+  assignLabel(labels_ptr, file_ptr);
   dataPoint *head_ptr = allocateDataMemory(number_of_points);
   assignData(head_ptr, file_ptr);
 
 
-  line *line_ptr = (line *) errMalloc(sizeof(line));
+  line *line_ptr = allocateLineMemory();
   linearBestFit(head_ptr, line_ptr);
+
 
   printf("Slope: %f\nIntercept: %f\nCorrelation Coefficient: %f\n", line_ptr->slope, line_ptr->intercept, line_ptr->corr_coeff);
 
   createPNG(head_ptr);
   
-  freeDataMemory(head_ptr);
-  
+  freeDataMemory(head_ptr, labels_ptr, line_ptr);
 
   return 0;
+}
+
+void printUsageInfo(void) {
+  printf("Welcome.\n");
+  printf("The datafile should be formatted:\nX Label,X Unit,Y Label,Y Unit\nX Data,X Error,Y Data,Y Error,\n...\n");
+  printf("Note: The data file must be in the same folder as this program.\n");
 }

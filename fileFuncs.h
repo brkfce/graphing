@@ -5,6 +5,7 @@
 
 // file functions
 int pointCount(FILE *);
+void readLabel(FILE *, char *);
 void readLine(FILE *, float *, float *, float *, float *);
 float readValue(FILE *, int);
 

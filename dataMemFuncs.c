@@ -11,6 +11,33 @@ void *errMalloc(unsigned int mem_size) {
   return ptr;
 }
 
+// allocate memory for the data labels
+dataLabel *allocateLabelMemory(void) {
+  return (dataLabel *) errMalloc(sizeof(dataLabel));
+}
+
+// write label strings to label struct
+void assignLabel(dataLabel *labels_ptr, FILE *file_ptr) {
+  char string[100];
+  readLabel(file_ptr, string);
+  strcpy(labels_ptr->x_label, string);
+  printf("%s\n", labels_ptr->x_label);
+  readLabel(file_ptr, string);
+  strcpy(labels_ptr->x_unit, string);
+  printf("%s\n", labels_ptr->x_unit);
+  readLabel(file_ptr, string);
+  strcpy(labels_ptr->y_label, string);
+  printf("%s\n", labels_ptr->y_label);
+  readLabel(file_ptr, string);
+  strcpy(labels_ptr->y_unit, string);
+  printf("%s\n", labels_ptr->y_unit);
+}
+
+// allocate space for line of best fit
+line * allocateLineMemory(void) {
+  return (line *) errMalloc(sizeof(line));
+}
+
 // allocate space for dataPoints
 dataPoint *allocateDataMemory(int number_of_points){
   dataPoint *head_ptr = NULL;
@@ -46,7 +73,7 @@ void assignData(dataPoint *head_ptr, FILE *file_ptr) {
 }
 
 // free datapoint memory
-void freeDataMemory(dataPoint *head_ptr) {
+void freeDataMemory(dataPoint *head_ptr, dataLabel *label_ptr, line * line_ptr) {
   dataPoint *current_ptr = head_ptr;
   dataPoint *next_ptr;
   while (current_ptr != NULL) {
@@ -54,4 +81,6 @@ void freeDataMemory(dataPoint *head_ptr) {
     free(current_ptr);
     current_ptr = next_ptr;
   }
+  free(label_ptr);
+  free(line_ptr);
 }

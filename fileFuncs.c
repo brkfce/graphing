@@ -1,5 +1,5 @@
-#include "main.h"
 #include "fileFuncs.h"
+
 
 // determine how many points are in the file
 int pointCount(FILE *file_ptr) {
@@ -19,10 +19,29 @@ int pointCount(FILE *file_ptr) {
     fprintf(stderr, "Error: File is empty");
     exit(-1);
   }
+  number_of_points--; // to account for the top line
   return number_of_points;
 }
 
-// read a line
+// read the axes titles and units from the first line in the file
+void readLabel(FILE *file_ptr, char *label) {
+  char string[100];
+  int counter = 0;
+  char read_char = fgetc(file_ptr);
+  while (read_char != ',' && read_char != '\n' && read_char != EOF) {
+    string[counter] = read_char;
+    read_char = (char) fgetc(file_ptr);
+    counter++;
+    if (counter > 99) {
+      fprintf(stderr, "Error: Label longer than 100 characters\n");
+      exit(-1);
+    }
+  }
+  string[counter] = '\0';
+  strcpy(label, string);
+}
+
+// allocate data from each field in the file to the respective variable
 void readLine(FILE *file_ptr, float *x_val, float *x_err_val, float *y_val, float *y_err_val) {
   
   // the max number of digits acceptable for the primative storing each value
@@ -42,7 +61,8 @@ float readValue(FILE *file_ptr, int MAX_DIGITS) {
   bool valid_value = false;
   int i = 0;
 
-  read_char = (char) fgetc(file_ptr);
+  read_char = fgetc(file_ptr);
+
   while (read_char != ',' && read_char != '\n' && read_char != EOF) {
     if (i >= MAX_DIGITS) {
       fprintf(stderr, "Error: Value to precision higher than %d digits.\n", MAX_DIGITS);
@@ -50,7 +70,7 @@ float readValue(FILE *file_ptr, int MAX_DIGITS) {
     }
     val_string[i] = read_char;
     i++;
-    read_char = (char) fgetc(file_ptr);
+    read_char =  fgetc(file_ptr);
     valid_value = true;
   }
   if (!valid_value) {
